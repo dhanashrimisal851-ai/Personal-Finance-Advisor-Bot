@@ -1,0 +1,210 @@
+{% extends "base.html" %}
+
+{% block title %}Savings Goals & Calculator — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Savings Goals & Calculator{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Milestones & Growth Planning</h2>
+    <p style="font-size: 13.5px; color: var(--text-muted);">Set clear financial targets, track accumulation, and calculate timelines</p>
+  </div>
+  <div style="display: flex; gap: 10px;">
+    <button class="btn btn-secondary" onclick="openModal('calculatorModal')">
+      <i class="fa-solid fa-calculator text-cyan"></i> <span>Savings Calculator</span>
+    </button>
+    <button class="btn btn-primary" onclick="openModal('addGoalModal')">
+      <i class="fa-solid fa-plus"></i> <span>Create Savings Goal</span>
+    </button>
+  </div>
+</div>
+
+<!-- Goals Summary Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 28px;">
+  <div class="stat-card rate">
+    <div class="stat-header">
+      <span class="stat-label">Total Target Capital</span>
+      <div class="stat-icon purple"><i class="fa-solid fa-bullseye"></i></div>
+    </div>
+    <div class="stat-value" id="summaryTotalTarget">₹0</div>
+    <div class="stat-subtext" id="summaryGoalsCount">0 active goals</div>
+  </div>
+
+  <div class="stat-card savings">
+    <div class="stat-header">
+      <span class="stat-label">Total Amount Saved</span>
+      <div class="stat-icon cyan"><i class="fa-solid fa-vault"></i></div>
+    </div>
+    <div class="stat-value" id="summaryTotalSaved">₹0</div>
+    <div class="stat-subtext">Cumulative progress</div>
+  </div>
+
+  <div class="stat-card income">
+    <div class="stat-header">
+      <span class="stat-label">Overall Completion</span>
+      <div class="stat-icon green"><i class="fa-solid fa-percent"></i></div>
+    </div>
+    <div class="stat-value" id="summaryOverallProgress">0%</div>
+    <div class="stat-subtext">Across all active targets</div>
+  </div>
+</div>
+
+<!-- Active Goals List -->
+<div class="card" style="margin-bottom: 30px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-flag-checkered text-warning"></i>
+      <span>Active Savings Milestones</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div id="goalsContainer" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+      <div style="text-align: center; color: var(--text-muted); padding: 40px; grid-column: 1 / -1;">
+        Loading savings goals...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     SAVINGS CALCULATOR MODAL
+     ========================================================================== -->
+<div class="modal-backdrop" id="calculatorModal">
+  <div class="modal-content" style="max-width: 600px;">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-calculator text-cyan"></i> Goal Savings Calculator</h3>
+      <button class="modal-close" onclick="closeModal('calculatorModal')">&times;</button>
+    </div>
+    <div class="modal-body">
+      <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+        Calculate required monthly contributions or estimated completion date to hit your target.
+      </p>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label" for="calcGoalAmount">Target Amount (₹) *</label>
+          <input type="number" id="calcGoalAmount" class="form-control" placeholder="e.g. 50000" min="1" step="100" value="50000">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="calcCurrentSavings">Current Savings (₹)</label>
+          <input type="number" id="calcCurrentSavings" class="form-control" placeholder="e.g. 10000" min="0" step="100" value="10000">
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 14px;">
+        <div class="form-group">
+          <label class="form-label" for="calcMonthlyContribution">Monthly Contribution (₹)</label>
+          <input type="number" id="calcMonthlyContribution" class="form-control" placeholder="e.g. 5000" min="0" step="100" value="5000">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="calcTargetDate">Target Deadline (Optional)</label>
+          <input type="date" id="calcTargetDate" class="form-control">
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-primary" style="width: 100%; margin-top: 6px;" onclick="calculateSavings()">
+        <i class="fa-solid fa-play"></i> Compute Timeline & Contribution
+      </button>
+
+      <!-- Calculator Results Box -->
+      <div id="calcResults" style="display: none; margin-top: 20px; background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+        <h4 style="font-size: 14px; font-weight: 700; color: #fff; margin-bottom: 12px;">Calculation Results</h4>
+        
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px; font-size: 13.5px;">
+          <div>
+            <span style="color: var(--text-dim);">Remaining to Save:</span>
+            <div style="font-size: 18px; font-weight: 700; color: #60a5fa;" id="calcResRemaining">₹0</div>
+          </div>
+          <div>
+            <span style="color: var(--text-dim);">Est. Completion Time:</span>
+            <div style="font-size: 18px; font-weight: 700; color: #34d399;" id="calcResMonths">--</div>
+          </div>
+          <div style="grid-column: 1 / -1;" id="calcResDateContainer">
+            <span style="color: var(--text-dim);">Estimated Target Date:</span>
+            <div style="font-size: 16px; font-weight: 600; color: #fbbf24;" id="calcResDate">--</div>
+          </div>
+          <div style="grid-column: 1 / -1;" id="calcResRequiredMonthlyContainer">
+            <span style="color: var(--text-dim);">Required Monthly Savings (to meet deadline):</span>
+            <div style="font-size: 16px; font-weight: 700; color: #22d3ee;" id="calcResRequired">₹0 / month</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeModal('calculatorModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     CREATE GOAL MODAL
+     ========================================================================== -->
+<div class="modal-backdrop" id="addGoalModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-bullseye text-warning"></i> Create Savings Goal</h3>
+      <button class="modal-close" onclick="closeModal('addGoalModal')">&times;</button>
+    </div>
+    <form id="addGoalForm" onsubmit="handleCreateGoal(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="goalName">Goal Name *</label>
+          <input type="text" id="goalName" class="form-control" placeholder="e.g. New Laptop, Emergency Fund" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="goalTarget">Target Amount (₹) *</label>
+          <input type="number" id="goalTarget" class="form-control" placeholder="e.g. 60000" min="1" step="1" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="goalCurrent">Initial Saved Amount (₹)</label>
+          <input type="number" id="goalCurrent" class="form-control" placeholder="0" min="0" step="1" value="0">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="goalTargetDate">Target Completion Date</label>
+          <input type="date" id="goalTargetDate" class="form-control">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="goalDescription">Description / Motivation</label>
+          <input type="text" id="goalDescription" class="form-control" placeholder="e.g. High-performance work laptop">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('addGoalModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Create Goal</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     DEPOSIT / CONTRIBUTE MODAL
+     ========================================================================== -->
+<div class="modal-backdrop" id="contributeGoalModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-coins text-success"></i> Add Funds to Goal</h3>
+      <button class="modal-close" onclick="closeModal('contributeGoalModal')">&times;</button>
+    </div>
+    <form id="contributeGoalForm" onsubmit="handleContributeGoal(event)">
+      <input type="hidden" id="contributeGoalId">
+      <div class="modal-body">
+        <p style="font-size: 13.5px; color: var(--text-main); margin-bottom: 14px;" id="contributeGoalNamePrompt">
+          Deposit savings towards this goal:
+        </p>
+        <div class="form-group">
+          <label class="form-label" for="contributeAmount">Contribution Amount (₹) *</label>
+          <input type="number" id="contributeAmount" class="form-control" placeholder="e.g. 2000" min="1" step="1" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('contributeGoalModal')">Cancel</button>
+        <button type="submit" class="btn btn-success"><i class="fa-solid fa-check"></i> Deposit Funds</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/goals.js') }}"></script>
+{% endblock %}

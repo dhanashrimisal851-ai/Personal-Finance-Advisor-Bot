@@ -1,0 +1,226 @@
+{% extends "base.html" %}
+
+{% block title %}Settings — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Account & System Settings{% endblock %}
+
+{% block content %}
+<div style="margin-bottom: 24px;">
+  <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Settings & Preferences</h2>
+  <p style="font-size: 13.5px; color: var(--text-muted);">Manage your profile credentials, data presets, and system configurations</p>
+</div>
+
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 30px;">
+  
+  <!-- Profile Update Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-user-gear text-primary"></i>
+        <span>Profile Information</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <form id="profileForm" onsubmit="handleUpdateProfile(event)">
+        <div class="form-group">
+          <label class="form-label" for="profileName">Full Name</label>
+          <input type="text" id="profileName" class="form-control" value="{{ user.name if user else '' }}" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="profileEmail">Email Address</label>
+          <input type="email" id="profileEmail" class="form-control" value="{{ user.email if user else '' }}" disabled style="opacity: 0.7;">
+          <div style="font-size: 11px; color: var(--text-dim); margin-top: 4px;">Email is linked to your private financial partition.</div>
+        </div>
+        <button type="submit" class="btn btn-primary btn-sm">
+          <i class="fa-solid fa-floppy-disk"></i> Save Profile
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- Password Update Card -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-lock text-cyan"></i>
+        <span>Security & Password</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <form id="passwordForm" onsubmit="handleUpdatePassword(event)">
+        <div class="form-group">
+          <label class="form-label" for="currPass">Current Password</label>
+          <input type="password" id="currPass" class="form-control" placeholder="••••••••" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="newPass">New Password</label>
+          <input type="password" id="newPass" class="form-control" placeholder="••••••••" minlength="6" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="confPass">Confirm New Password</label>
+          <input type="password" id="confPass" class="form-control" placeholder="••••••••" minlength="6" required>
+        </div>
+        <button type="submit" class="btn btn-secondary btn-sm">
+          <i class="fa-solid fa-key"></i> Update Password
+        </button>
+      </form>
+    </div>
+  </div>
+
+</div>
+
+<!-- Data Management & AI Setup Row -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+  
+  <!-- Demo Data Management -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-database text-warning"></i>
+        <span>Data & Sandbox Management</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 18px; line-height: 1.6;">
+        Load standard hackathon seed data (Income ₹30,000, 6 categorized expenses, budget caps, laptop goal) to immediately populate graphs and AI insights, or clear data to start fresh.
+      </p>
+
+      <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+        <button class="btn btn-primary btn-sm" onclick="populateDemoData()">
+          <i class="fa-solid fa-bolt"></i> Populate Sample / Demo Data
+        </button>
+        <button class="btn btn-danger btn-sm" onclick="clearAllData()">
+          <i class="fa-solid fa-trash-can"></i> Clear All My Records
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Engine & Gemini API Status -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-robot text-primary"></i>
+        <span>Google Gemini AI Integration</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <p style="font-size: 13.5px; color: var(--text-muted); margin-bottom: 14px; line-height: 1.6;">
+        The system automatically loads your Gemini API key from <code>.env</code> file. When an API key is provided, requests are processed live via Google Gemini 1.5/2.5 Flash.
+      </p>
+
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 14px; font-size: 13px; margin-bottom: 12px;">
+        <div style="display: flex; justify-content: space-between; margin-bottom: 4px;">
+          <span style="color: var(--text-dim);">Engine Mode:</span>
+          <span id="settingsAiEngine" class="badge badge-normal">Checking...</span>
+        </div>
+        <div style="display: flex; justify-content: space-between;">
+          <span style="color: var(--text-dim);">Currency Standard:</span>
+          <span style="color: #fff; font-weight: 600;">Indian Rupee (₹)</span>
+        </div>
+      </div>
+      
+      <div style="font-size: 12px; color: var(--text-dim);">
+        To configure your live key, add <code>GEMINI_API_KEY=your_key</code> in the project's <code>.env</code> file.
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  fetchAiEngineStatus();
+});
+
+async function fetchAiEngineStatus() {
+  try {
+    const res = await fetch("/api/ai/status");
+    const data = await res.json();
+    const badge = document.getElementById("settingsAiEngine");
+    if (badge) {
+      badge.innerText = data.engine;
+      badge.className = data.is_live_gemini ? "badge badge-normal" : "badge badge-info";
+    }
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function handleUpdateProfile(e) {
+  e.preventDefault();
+  const name = document.getElementById("profileName").value.trim();
+
+  try {
+    const res = await fetch("/api/settings/profile", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ name })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to update profile");
+
+    showToast(data.message, "success");
+    setTimeout(() => location.reload(), 1000);
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
+}
+
+async function handleUpdatePassword(e) {
+  e.preventDefault();
+  const current_password = document.getElementById("currPass").value;
+  const new_password = document.getElementById("newPass").value;
+  const confirm_password = document.getElementById("confPass").value;
+
+  if (new_password !== confirm_password) {
+    showToast("New passwords do not match.", "warning");
+    return;
+  }
+
+  try {
+    const res = await fetch("/api/settings/password", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ current_password, new_password, confirm_password })
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to update password");
+
+    showToast(data.message, "success");
+    document.getElementById("passwordForm").reset();
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
+}
+
+async function populateDemoData() {
+  if (!confirm("This will load the realistic demo data (₹30,000 salary, 6 expenses, budgets, laptop goal). Proceed?")) return;
+
+  try {
+    const res = await fetch("/api/settings/seed-demo", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to seed data");
+
+    showToast(data.message, "success");
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
+}
+
+async function clearAllData() {
+  if (!confirm("Are you sure you want to wipe all your financial records? This action cannot be undone.")) return;
+
+  try {
+    const res = await fetch("/api/settings/clear-data", { method: "POST" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to clear records");
+
+    showToast(data.message, "info");
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
+}
+</script>
+{% endblock %}

@@ -1,0 +1,200 @@
+{% extends "base.html" %}
+
+{% block title %}Transactions — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Transaction History{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Unified Ledger</h2>
+    <p style="font-size: 13.5px; color: var(--text-muted);">Complete chronological record of all inflows and outflows</p>
+  </div>
+  <div style="display: flex; gap: 10px;">
+    <button class="btn btn-outline btn-sm" onclick="openModal('quickIncomeModal')">
+      <i class="fa-solid fa-plus text-success"></i> Add Income
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="openModal('quickExpenseModal')">
+      <i class="fa-solid fa-plus"></i> Add Expense
+    </button>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-body" style="padding: 16px 20px;">
+    <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 1.5; min-width: 220px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">Search Transactions</label>
+        <input type="text" id="txSearch" class="form-control" placeholder="Search description or category..." oninput="debounceLoadTransactions()">
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">Transaction Type</label>
+        <select id="txType" class="form-select" onchange="loadTransactions()">
+          <option value="All">All Types</option>
+          <option value="Income">Income Only</option>
+          <option value="Expense">Expense Only</option>
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">From</label>
+        <input type="date" id="txStart" class="form-control" onchange="loadTransactions()">
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">To</label>
+        <input type="date" id="txEnd" class="form-control" onchange="loadTransactions()">
+      </div>
+
+      <div style="align-self: flex-end; padding-bottom: 2px;">
+        <button class="btn btn-secondary btn-sm" onclick="resetTxFilters()">
+          <i class="fa-solid fa-filter-circle-xmark"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Transactions Table -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-clock-rotate-left text-primary"></i>
+      <span>All Transactions (<span id="txCount">0</span>)</span>
+    </div>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Type</th>
+            <th>Category / Source</th>
+            <th>Description</th>
+            <th>Method</th>
+            <th style="text-align: right;">Amount</th>
+            <th style="text-align: center; width: 100px;">Action</th>
+          </tr>
+        </thead>
+        <tbody id="transactionsTableBody">
+          <tr>
+            <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              Loading transactions...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+let txDebounce = null;
+
+document.addEventListener("DOMContentLoaded", () => {
+  loadTransactions();
+});
+
+function debounceLoadTransactions() {
+  clearTimeout(txDebounce);
+  txDebounce = setTimeout(() => {
+    loadTransactions();
+  }, 300);
+}
+
+async function loadTransactions() {
+  const type = document.getElementById("txType").value;
+  const search = document.getElementById("txSearch").value.trim();
+  const start = document.getElementById("txStart").value;
+  const end = document.getElementById("txEnd").value;
+
+  let url = `/api/transactions?type=${type}`;
+  if (search) url += `&search=${encodeURIComponent(search)}`;
+  if (start) url += `&start_date=${start}`;
+  if (end) url += `&end_date=${end}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to load transactions");
+
+    document.getElementById("txCount").innerText = data.count || 0;
+    renderTxList(data.transactions || []);
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
+}
+
+function renderTxList(txs) {
+  const tbody = document.getElementById("transactionsTableBody");
+  if (!tbody) return;
+
+  if (txs.length === 0) {
+    tbody.innerHTML = `
+      <tr>
+        <td colspan="7" style="text-align: center; color: var(--text-muted); padding: 36px;">
+          No transactions found for the selected criteria.
+        </td>
+      </tr>
+    `;
+    return;
+  }
+
+  let html = "";
+  txs.forEach(t => {
+    const isIncome = t.type === "Income";
+    const amtColor = isIncome ? "#34d399" : "#f87171";
+    const amtPrefix = isIncome ? "+" : "-";
+    const badgeType = isIncome ? "badge-normal" : "badge-info";
+
+    html += `
+      <tr>
+        <td style="color: var(--text-muted); font-size: 13.5px;">${t.date}</td>
+        <td><span class="badge ${badgeType}">${t.type}</span></td>
+        <td><strong style="color: #fff;">${t.category_source}</strong></td>
+        <td style="color: var(--text-main); font-size: 13.5px;">${t.description || "-"}</td>
+        <td style="color: var(--text-dim); font-size: 12.5px;">${t.payment_method || "-"}</td>
+        <td style="text-align: right; font-weight: 700; color: ${amtColor}; font-size: 15px;">
+          ${amtPrefix} ${formatINR(t.amount)}
+        </td>
+        <td style="text-align: center;">
+          <button class="btn btn-danger btn-icon btn-sm" onclick="deleteTx('${t.type}', ${t.id})" title="Delete">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      </tr>
+    `;
+  });
+
+  tbody.innerHTML = html;
+}
+
+async function deleteTx(type, id) {
+  if (!confirm(`Are you sure you want to delete this ${type.toLowerCase()} record?`)) return;
+  const endpoint = type === "Income" ? `/api/income/${id}` : `/api/expenses/${id}`;
+
+  try {
+    const res = await fetch(endpoint, { method: "DELETE" });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || "Failed to delete");
+
+    showToast(`${type} record deleted.`, "info");
+    loadTransactions();
+  } catch (err) {
+    showToast(err.message, "danger");
+  }
+}
+
+function resetTxFilters() {
+  document.getElementById("txSearch").value = "";
+  document.getElementById("txType").value = "All";
+  document.getElementById("txStart").value = "";
+  document.getElementById("txEnd").value = "";
+  loadTransactions();
+}
+</script>
+{% endblock %}

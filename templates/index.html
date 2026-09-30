@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Personal Finance Advisor Bot — Track. Understand. Save. Grow.</title>
+  <meta name="description" content="AI-Powered personal finance management platform. Track income, budget expenses, calculate financial health, and receive real Gemini AI advisory.">
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800;900&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="background-color: var(--bg-primary);">
+
+  <!-- Navbar -->
+  <header class="landing-nav">
+    <div style="display: flex; align-items: center; gap: 12px;">
+      <div class="brand-icon">
+        <i class="fa-solid fa-wallet"></i>
+      </div>
+      <div>
+        <div style="font-weight: 800; font-size: 18px; color: #fff;">Finance Advisor</div>
+        <div style="font-size: 11px; color: var(--accent-cyan); letter-spacing: 0.05em; text-transform: uppercase;">AI-Powered Wealth Bot</div>
+      </div>
+    </div>
+
+    <div style="display: flex; align-items: center; gap: 14px;">
+      <a href="{{ url_for('auth.demo_login') }}" class="btn btn-outline btn-sm">
+        <i class="fa-solid fa-bolt text-warning"></i> <span>1-Click Demo</span>
+      </a>
+      <a href="{{ url_for('auth.login_view') }}" class="btn btn-secondary btn-sm">
+        <span>Login</span>
+      </a>
+      <a href="{{ url_for('auth.register_view') }}" class="btn btn-primary btn-sm">
+        <span>Get Started</span>
+      </a>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="landing-hero">
+    <div class="hero-tag">
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <span>Smart Budgeting Meets Google Gemini AI</span>
+    </div>
+
+    <h1 class="hero-title">
+      Track. Understand. Save. <span>Grow.</span>
+    </h1>
+
+    <p class="hero-subtitle">
+      Take control of your money with AI-powered financial insights. Record income, categorize spending, prevent overspending before it occurs, and achieve your savings targets with tailored recommendations.
+    </p>
+
+    <div class="hero-cta-group">
+      <a href="{{ url_for('auth.register_view') }}" class="btn btn-primary" style="padding: 14px 28px; font-size: 16px;">
+        <i class="fa-solid fa-rocket"></i> <span>Start Free Now</span>
+      </a>
+      <a href="{{ url_for('auth.demo_login') }}" class="btn btn-secondary" style="padding: 14px 28px; font-size: 16px;">
+        <i class="fa-solid fa-play text-cyan"></i> <span>Explore Live Demo</span>
+      </a>
+      <a href="{{ url_for('auth.login_view') }}" class="btn btn-outline" style="padding: 14px 24px; font-size: 16px;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Existing User</span>
+      </a>
+    </div>
+
+    <!-- Live Preview Card Mockup -->
+    <div style="margin-top: 50px; background: var(--bg-card); border: 1px solid var(--border-color-glow); border-radius: var(--radius-lg); padding: 32px; box-shadow: var(--shadow-glow); text-align: left;">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 12px;">
+        <div>
+          <span class="badge badge-info" style="margin-bottom: 8px;">Demo Financial Snapshot</span>
+          <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Monthly Financial Health Overview</h2>
+        </div>
+        <div style="display: flex; align-items: center; gap: 10px;">
+          <span style="font-size: 13px; color: var(--text-muted);">Score:</span>
+          <span class="badge badge-normal" style="font-size: 15px; padding: 6px 14px;"><i class="fa-solid fa-shield-heart"></i> 78 / 100 (Good)</span>
+        </div>
+      </div>
+
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px;">
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+          <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">Monthly Income</div>
+          <div style="font-size: 24px; font-weight: 700; color: #34d399; margin-top: 4px;">₹30,000</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Salary + Inflows</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+          <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">Total Expenses</div>
+          <div style="font-size: 24px; font-weight: 700; color: #f87171; margin-top: 4px;">₹19,500</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Rent, Food, Commute</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+          <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">Net Savings</div>
+          <div style="font-size: 24px; font-weight: 700; color: #22d3ee; margin-top: 4px;">₹10,500</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Savings Rate: 35.0%</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+          <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">Primary Goal</div>
+          <div style="font-size: 20px; font-weight: 700; color: #fbbf24; margin-top: 4px;">New Laptop</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">₹25,000 / ₹60,000 (41.6%)</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Grid -->
+  <section style="padding: 40px 24px 80px;">
+    <div style="text-align: center; max-width: 650px; margin: 0 auto 50px;">
+      <h2 style="font-size: 34px; font-weight: 800; color: #fff; margin-bottom: 12px;">Why Choose Personal Finance Advisor?</h2>
+      <p style="font-size: 16px; color: var(--text-muted);">A comprehensive suite designed for modern financial clarity and stress-free budgeting.</p>
+    </div>
+
+    <div class="features-grid">
+      <div class="feature-box">
+        <div class="feature-icon" style="background: rgba(59, 130, 246, 0.15); color: #60a5fa;">
+          <i class="fa-solid fa-sliders"></i>
+        </div>
+        <h3 class="feature-title">Smart Budgeting</h3>
+        <p class="feature-desc">Set dynamic category caps for food, rent, entertainment and more. Real-time visual progress bars alert you before overspending.</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon" style="background: rgba(16, 185, 129, 0.15); color: #34d399;">
+          <i class="fa-solid fa-receipt"></i>
+        </div>
+        <h3 class="feature-title">Expense Management</h3>
+        <p class="feature-desc">Record, filter, search and sort transactions effortlessly across multiple payment methods (UPI, Cards, Net Banking, Cash).</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon" style="background: rgba(99, 102, 241, 0.15); color: #818cf8;">
+          <i class="fa-solid fa-robot"></i>
+        </div>
+        <h3 class="feature-title">AI Financial Advisor</h3>
+        <p class="feature-desc">Powered by Google Gemini to analyze your exact spending habits, identify cash leaks, and provide actionable step-by-step guidance.</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon" style="background: rgba(245, 158, 11, 0.15); color: #fbbf24;">
+          <i class="fa-solid fa-bullseye"></i>
+        </div>
+        <h3 class="feature-title">Savings Goals & Calculator</h3>
+        <p class="feature-desc">Establish milestones like Emergency Funds or gadgets. Use the integrated calculator to determine required monthly contributions.</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon" style="background: rgba(6, 182, 212, 0.15); color: #22d3ee;">
+          <i class="fa-solid fa-chart-pie"></i>
+        </div>
+        <h3 class="feature-title">Spending Analytics</h3>
+        <p class="feature-desc">Interactive Chart.js visualizations for category distribution, month-over-month comparisons, and 6-month savings trajectories.</p>
+      </div>
+
+      <div class="feature-box">
+        <div class="feature-icon" style="background: rgba(239, 68, 68, 0.15); color: #f87171;">
+          <i class="fa-solid fa-file-pdf"></i>
+        </div>
+        <h3 class="feature-title">Monthly PDF Reports</h3>
+        <p class="feature-desc">Export comprehensive, beautifully formatted PDF financial statements with category breakdowns, budget adherence, and AI assessments.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer style="border-top: 1px solid var(--border-color); padding: 40px 24px; text-align: center; color: var(--text-dim); font-size: 13px;">
+    <div style="margin-bottom: 12px; font-weight: 600; color: #fff;">
+      Personal Finance Advisor Bot — “Track. Understand. Save. Grow.”
+    </div>
+    <div>Built with Python Flask, SQLite, SQLAlchemy, Chart.js, ReportLab & Google Gemini AI.</div>
+  </footer>
+
+</body>
+</html>

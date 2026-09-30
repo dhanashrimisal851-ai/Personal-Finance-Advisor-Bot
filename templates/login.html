@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login — Personal Finance Advisor Bot</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-primary); padding: 20px;">
+
+  <div style="width: 100%; max-width: 440px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 36px; box-shadow: var(--shadow-card);">
+    <div style="text-align: center; margin-bottom: 28px;">
+      <a href="{{ url_for('index') }}" style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <div class="brand-icon" style="width: 36px; height: 36px; font-size: 18px;">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <span style="font-size: 20px; font-weight: 800; color: #fff;">Finance Advisor</span>
+      </a>
+      <h2 style="font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px;">Welcome Back</h2>
+      <p style="font-size: 13.5px; color: var(--text-muted);">Access your private financial dashboard</p>
+    </div>
+
+    <div id="loginAlert" style="display: none;"></div>
+
+    <form id="loginForm" onsubmit="handleLogin(event)">
+      <div class="form-group">
+        <label class="form-label" for="loginEmail">Email Address</label>
+        <input type="email" id="loginEmail" class="form-control" placeholder="name@example.com" required autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="loginPassword">Password</label>
+        <input type="password" id="loginPassword" class="form-control" placeholder="••••••••" required autocomplete="current-password">
+      </div>
+
+      <button type="submit" id="loginSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 8px;">
+        <i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Sign In</span>
+      </button>
+    </form>
+
+    <div style="margin: 24px 0; display: flex; align-items: center; gap: 12px;">
+      <div style="flex: 1; height: 1px; background-color: var(--border-color);"></div>
+      <span style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">or instant access</span>
+      <div style="flex: 1; height: 1px; background-color: var(--border-color);"></div>
+    </div>
+
+    <!-- 1-Click Demo Login -->
+    <a href="{{ url_for('auth.demo_login') }}" class="btn btn-secondary" style="width: 100%; padding: 11px;">
+      <i class="fa-solid fa-bolt text-warning"></i> <span>Try Demo Account (Pre-filled Data)</span>
+    </a>
+
+    <div style="text-align: center; margin-top: 24px; font-size: 13.5px; color: var(--text-muted);">
+      Don't have an account? <a href="{{ url_for('auth.register_view') }}" style="font-weight: 600;">Create one</a>
+    </div>
+  </div>
+
+  <script>
+    async function handleLogin(e) {
+      e.preventDefault();
+      const email = document.getElementById("loginEmail").value.trim();
+      const password = document.getElementById("loginPassword").value;
+      const alertBox = document.getElementById("loginAlert");
+      const btn = document.getElementById("loginSubmitBtn");
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Signing in...</span>`;
+
+      try {
+        const res = await fetch("/api/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Login failed. Please check credentials.");
+        }
+
+        window.location.href = "/dashboard";
+      } catch (err) {
+        alertBox.className = "alert alert-danger";
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${err.message}</span>`;
+        alertBox.style.display = "flex";
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-arrow-right-to-bracket"></i> <span>Sign In</span>`;
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,229 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Financial Dashboard{% endblock %}
+
+{% block content %}
+<!-- Top Filter Bar -->
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Monthly Cash Flow Overview</h2>
+    <p style="font-size: 13.5px; color: var(--text-muted);">Real-time tracking, health score & category allocations</p>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 12px;">
+    <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+      <i class="fa-solid fa-calendar-days text-primary"></i>
+      <select id="dashMonth" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="loadDashboardData()">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+      <select id="dashYear" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="loadDashboardData()">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+
+    <button class="btn btn-secondary btn-sm" onclick="loadDashboardData()" title="Refresh Data">
+      <i class="fa-solid fa-arrows-rotate"></i>
+    </button>
+  </div>
+</div>
+
+<!-- Dynamic In-App Alerts Container -->
+<div id="dashboardAlerts" style="margin-bottom: 24px;"></div>
+
+<!-- 5 Summary Metric Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 18px; margin-bottom: 28px;">
+  <!-- Monthly Income -->
+  <div class="stat-card income">
+    <div class="stat-header">
+      <span class="stat-label">Monthly Income</span>
+      <div class="stat-icon green"><i class="fa-solid fa-money-bill-wave"></i></div>
+    </div>
+    <div class="stat-value" id="cardIncome">₹0</div>
+    <div class="stat-subtext" id="cardIncomeSub">Total incoming cash flow</div>
+  </div>
+
+  <!-- Total Expenses -->
+  <div class="stat-card expense">
+    <div class="stat-header">
+      <span class="stat-label">Total Expenses</span>
+      <div class="stat-icon red"><i class="fa-solid fa-receipt"></i></div>
+    </div>
+    <div class="stat-value" id="cardExpenses">₹0</div>
+    <div class="stat-subtext" id="cardExpensesSub">Total outgoing expenses</div>
+  </div>
+
+  <!-- Current Savings -->
+  <div class="stat-card savings">
+    <div class="stat-header">
+      <span class="stat-label">Current Savings</span>
+      <div class="stat-icon cyan"><i class="fa-solid fa-piggy-bank"></i></div>
+    </div>
+    <div class="stat-value" id="cardSavings">₹0</div>
+    <div class="stat-subtext">Income minus expenses</div>
+  </div>
+
+  <!-- Savings Percentage -->
+  <div class="stat-card rate">
+    <div class="stat-header">
+      <span class="stat-label">Savings Rate</span>
+      <div class="stat-icon purple"><i class="fa-solid fa-percent"></i></div>
+    </div>
+    <div class="stat-value" id="cardSavingsRate">0%</div>
+    <div class="stat-subtext">Benchmark: 20%+</div>
+  </div>
+
+  <!-- Remaining Budget -->
+  <div class="stat-card budget">
+    <div class="stat-header">
+      <span class="stat-label">Remaining Budget</span>
+      <div class="stat-icon amber"><i class="fa-solid fa-wallet"></i></div>
+    </div>
+    <div class="stat-value" id="cardRemainingBudget">₹0</div>
+    <div class="stat-subtext" id="cardBudgetSub">Across category limits</div>
+  </div>
+</div>
+
+<!-- Financial Health Score & Active Budget Grid -->
+<div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; margin-bottom: 28px;">
+  
+  <!-- Financial Health Score -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-shield-heart text-primary"></i>
+        <span>Financial Health Score</span>
+      </div>
+      <span class="badge" id="healthScoreBadge">Calculating...</span>
+    </div>
+    <div class="card-body">
+      <div style="display: flex; align-items: center; gap: 24px; margin-bottom: 20px;">
+        <div style="text-align: center; min-width: 110px;">
+          <div style="font-size: 48px; font-weight: 800; line-height: 1; color: #fff;" id="healthScoreValue">--</div>
+          <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase; margin-top: 4px;">Out of 100</div>
+        </div>
+        <div style="flex: 1;">
+          <p style="font-size: 14px; color: var(--text-main); line-height: 1.5;" id="healthScoreSummary">
+            Evaluating your cash flow, savings rate, and budget adherence...
+          </p>
+        </div>
+      </div>
+
+      <!-- Strengths and Improvement Tabs -->
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px; margin-bottom: 12px;">
+        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #34d399; margin-bottom: 6px;">
+          <i class="fa-solid fa-circle-check"></i> Positive Habits
+        </div>
+        <ul id="healthPositives" style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+          <li>Loading...</li>
+        </ul>
+      </div>
+
+      <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 10px; padding: 14px;">
+        <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: #f59e0b; margin-bottom: 6px;">
+          <i class="fa-solid fa-triangle-exclamation"></i> Areas to Improve
+        </div>
+        <ul id="healthImprovements" style="margin: 0; padding-left: 20px; font-size: 13px; color: var(--text-muted); line-height: 1.6;">
+          <li>Loading...</li>
+        </ul>
+      </div>
+
+      <div style="margin-top: 14px; font-size: 11px; color: var(--text-dim);">
+        <i class="fa-solid fa-circle-info"></i> Transparent scoring based on 30% savings rate, 30% budget adherence, 25% expense ratio, and 15% goal progress.
+      </div>
+    </div>
+  </div>
+
+  <!-- Budget Adherence Progress -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-sliders text-cyan"></i>
+        <span>Budget Adherence</span>
+      </div>
+      <a href="{{ url_for('budget.budget_view') }}" class="btn btn-outline btn-sm">Manage Budgets</a>
+    </div>
+    <div class="card-body">
+      <div id="budgetProgressList" style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="text-align: center; color: var(--text-muted); padding: 30px 0;">
+          Loading budget metrics...
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Recent Transactions & Savings Goals Row -->
+<div style="display: grid; grid-template-columns: 1.3fr 0.9fr; gap: 24px;">
+  
+  <!-- Recent Transactions -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-clock-rotate-left text-primary"></i>
+        <span>Recent Transactions</span>
+      </div>
+      <a href="{{ url_for('expenses.transactions_view') }}" class="btn btn-outline btn-sm">View All</a>
+    </div>
+    <div class="card-body" style="padding: 0;">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Type</th>
+              <th>Category / Source</th>
+              <th>Description</th>
+              <th style="text-align: right;">Amount</th>
+            </tr>
+          </thead>
+          <tbody id="recentTransactionsTable">
+            <tr>
+              <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+                Loading transactions...
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- Active Savings Goals Widget -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-bullseye text-warning"></i>
+        <span>Savings Goals</span>
+      </div>
+      <a href="{{ url_for('goals.goals_view') }}" class="btn btn-outline btn-sm">+ New Goal</a>
+    </div>
+    <div class="card-body">
+      <div id="dashboardGoalsList" style="display: flex; flex-direction: column; gap: 18px;">
+        <div style="text-align: center; color: var(--text-muted); padding: 30px 0;">
+          Loading goals...
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/dashboard.js') }}"></script>
+{% endblock %}

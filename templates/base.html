@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{% block title %}Personal Finance Advisor Bot{% endblock %} — Track. Understand. Save. Grow.</title>
+  <meta name="description" content="AI-Powered Personal Finance Management Platform for budgeting, expense tracking, savings, and personalized financial insights.">
+  
+  <!-- Google Fonts: Outfit & Inter -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- Font Awesome 6 -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- Application Stylesheet -->
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  {% block extra_head %}{% endblock %}
+</head>
+<body>
+
+<div class="app-wrapper">
+  <!-- Sidebar Navigation -->
+  <aside class="sidebar" id="appSidebar">
+    <div class="sidebar-brand">
+      <div class="brand-icon">
+        <i class="fa-solid fa-wallet"></i>
+      </div>
+      <div>
+        <div class="brand-title">Finance Advisor</div>
+        <div class="brand-subtitle">Track • Save • Grow</div>
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="{{ url_for('dashboard.dashboard_view') }}" class="nav-link {% if request.path == '/dashboard' %}active{% endif %}">
+        <i class="fa-solid fa-house"></i>
+        <span>Dashboard</span>
+      </a>
+      <a href="{{ url_for('income.income_view') }}" class="nav-link {% if request.path == '/income' %}active{% endif %}">
+        <i class="fa-solid fa-money-bill-wave"></i>
+        <span>Income</span>
+      </a>
+      <a href="{{ url_for('expenses.expenses_view') }}" class="nav-link {% if request.path == '/expenses' %}active{% endif %}">
+        <i class="fa-solid fa-receipt"></i>
+        <span>Expenses</span>
+      </a>
+      <a href="{{ url_for('expenses.transactions_view') }}" class="nav-link {% if request.path == '/transactions' %}active{% endif %}">
+        <i class="fa-solid fa-list-check"></i>
+        <span>Transactions</span>
+      </a>
+      <a href="{{ url_for('budget.budget_view') }}" class="nav-link {% if request.path == '/budget' %}active{% endif %}">
+        <i class="fa-solid fa-chart-pie"></i>
+        <span>Budget</span>
+      </a>
+      <a href="{{ url_for('goals.goals_view') }}" class="nav-link {% if request.path == '/goals' %}active{% endif %}">
+        <i class="fa-solid fa-bullseye"></i>
+        <span>Savings Goals</span>
+      </a>
+      <a href="{{ url_for('analytics.analytics_view') }}" class="nav-link {% if request.path == '/analytics' %}active{% endif %}">
+        <i class="fa-solid fa-chart-line"></i>
+        <span>Analytics</span>
+      </a>
+      <a href="{{ url_for('ai.ai_advisor_view') }}" class="nav-link {% if request.path == '/ai-advisor' %}active{% endif %}">
+        <i class="fa-solid fa-robot"></i>
+        <span>AI Advisor</span>
+      </a>
+      <a href="{{ url_for('reports.reports_view') }}" class="nav-link {% if request.path == '/reports' %}active{% endif %}">
+        <i class="fa-solid fa-file-invoice-dollar"></i>
+        <span>Monthly Reports</span>
+      </a>
+      <a href="{{ url_for('settings.settings_view') }}" class="nav-link {% if request.path == '/settings' %}active{% endif %}">
+        <i class="fa-solid fa-gear"></i>
+        <span>Settings</span>
+      </a>
+      <a href="{{ url_for('auth.logout') }}" class="nav-link" style="color: #ef4444; margin-top: auto;">
+        <i class="fa-solid fa-right-from-bracket" style="color: #ef4444;"></i>
+        <span>Logout</span>
+      </a>
+    </nav>
+
+    {% if current_user %}
+    <div class="sidebar-footer">
+      <div class="user-badge">
+        <div class="user-avatar">
+          {{ current_user.name[0]|upper }}
+        </div>
+        <div class="user-info">
+          <div class="user-name">{{ current_user.name }}</div>
+          <div class="user-role"><i class="fa-solid fa-circle-check"></i> Active User</div>
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper">
+    <!-- Top Header -->
+    <header class="top-header">
+      <div class="header-left">
+        <button class="mobile-toggle" id="sidebarToggle" aria-label="Toggle Navigation">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <h1 class="page-title">{% block page_title %}Dashboard{% endblock %}</h1>
+      </div>
+
+      <div class="header-right">
+        <!-- Quick Action Modals -->
+        <button class="btn btn-outline btn-sm" onclick="openModal('quickIncomeModal')" title="Quick Add Income">
+          <i class="fa-solid fa-plus text-success"></i> <span>Income</span>
+        </button>
+        <button class="btn btn-primary btn-sm" onclick="openModal('quickExpenseModal')" title="Quick Add Expense">
+          <i class="fa-solid fa-plus"></i> <span>Expense</span>
+        </button>
+        <a href="{{ url_for('ai.ai_advisor_view') }}" class="btn btn-secondary btn-sm" title="Ask AI Advisor">
+          <i class="fa-solid fa-wand-magic-sparkles" style="color: #60a5fa;"></i> <span>Ask AI</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- Page Content Container -->
+    <main class="page-container">
+      <!-- Toast Alert Box -->
+      <div id="toastContainer" style="position: fixed; top: 85px; right: 30px; z-index: 1050; min-width: 300px; max-width: 450px;"></div>
+      
+      {% block content %}{% endblock %}
+    </main>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     GLOBAL QUICK ADD EXPENSE MODAL
+     ========================================================================== -->
+<div class="modal-backdrop" id="quickExpenseModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-receipt text-primary"></i> Add Expense</h3>
+      <button class="modal-close" onclick="closeModal('quickExpenseModal')">&times;</button>
+    </div>
+    <form id="quickExpenseForm" onsubmit="handleQuickExpense(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="qeAmount">Amount (₹) *</label>
+          <input type="number" id="qeAmount" class="form-control" placeholder="e.g. 500" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="qeCategory">Category *</label>
+          <select id="qeCategory" class="form-select" required>
+            <option value="Food">Food</option>
+            <option value="Rent">Rent</option>
+            <option value="Transport">Transport</option>
+            <option value="Education">Education</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Bills & Utilities">Bills & Utilities</option>
+            <option value="Travel">Travel</option>
+            <option value="Personal Care">Personal Care</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="qePayment">Payment Method</label>
+          <select id="qePayment" class="form-select">
+            <option value="UPI">UPI</option>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Debit Card">Debit Card</option>
+            <option value="Net Banking">Net Banking</option>
+            <option value="Cash">Cash</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="qeDate">Date *</label>
+          <input type="date" id="qeDate" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="qeDescription">Description</label>
+          <input type="text" id="qeDescription" class="form-control" placeholder="e.g. Grocery items or coffee">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('quickExpenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     GLOBAL QUICK ADD INCOME MODAL
+     ========================================================================== -->
+<div class="modal-backdrop" id="quickIncomeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-money-bill-wave text-success"></i> Add Income</h3>
+      <button class="modal-close" onclick="closeModal('quickIncomeModal')">&times;</button>
+    </div>
+    <form id="quickIncomeForm" onsubmit="handleQuickIncome(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="qiAmount">Amount (₹) *</label>
+          <input type="number" id="qiAmount" class="form-control" placeholder="e.g. 30000" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="qiSource">Source *</label>
+          <select id="qiSource" class="form-select" required>
+            <option value="Salary">Salary</option>
+            <option value="Freelancing">Freelancing</option>
+            <option value="Allowance">Allowance</option>
+            <option value="Business">Business</option>
+            <option value="Investment">Investment</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="qiDate">Date *</label>
+          <input type="date" id="qiDate" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="qiDescription">Description</label>
+          <input type="text" id="qiDescription" class="form-control" placeholder="e.g. Monthly salary or client stipend">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('quickIncomeModal')">Cancel</button>
+        <button type="submit" class="btn btn-success"><i class="fa-solid fa-check"></i> Save Income</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Core Script -->
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block extra_scripts %}{% endblock %}
+
+</body>
+</html>

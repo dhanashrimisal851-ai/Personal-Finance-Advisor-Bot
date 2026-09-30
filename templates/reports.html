@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+
+{% block title %}Monthly Financial Reports — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Monthly Financial Reports{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Performance Statements & Downloads</h2>
+    <p style="font-size: 13.5px; color: var(--text-muted);">Generate comprehensive monthly financial summaries, adherence logs, and export PDFs</p>
+  </div>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+      <select id="reportMonth" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="loadReportData()">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+      <select id="reportYear" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="loadReportData()">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+
+    <button class="btn btn-secondary btn-sm" onclick="window.print()" title="Print Web View">
+      <i class="fa-solid fa-print"></i> <span>Print</span>
+    </button>
+    <button class="btn btn-primary btn-sm" onclick="downloadPdfReport()" title="Download PDF Report">
+      <i class="fa-solid fa-file-pdf"></i> <span>Download Report (PDF)</span>
+    </button>
+  </div>
+</div>
+
+<!-- Printable Report Container -->
+<div id="reportPrintArea" class="card" style="padding: 32px; margin-bottom: 30px;">
+  
+  <!-- Statement Header -->
+  <div style="display: flex; justify-content: space-between; align-items: flex-start; padding-bottom: 20px; border-bottom: 2px solid var(--border-color); margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+    <div>
+      <span class="badge badge-info" style="margin-bottom: 8px;">Official Financial Statement</span>
+      <h3 style="font-size: 26px; font-weight: 800; color: #fff;" id="reportPeriodTitle">Monthly Statement</h3>
+      <div style="font-size: 13.5px; color: var(--text-muted);" id="reportUserMeta">Prepared for: User</div>
+    </div>
+    <div style="text-align: right;">
+      <div style="font-size: 13px; color: var(--text-dim);">Generated on:</div>
+      <div style="font-size: 14px; font-weight: 600; color: #fff;" id="reportGenDate">Today</div>
+    </div>
+  </div>
+
+  <!-- Key Metrics 4-Box Row -->
+  <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 28px;">
+    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+      <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">Total Income</div>
+      <div style="font-size: 24px; font-weight: 700; color: #34d399; margin-top: 4px;" id="repIncome">₹0</div>
+    </div>
+
+    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+      <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">Total Expenses</div>
+      <div style="font-size: 24px; font-weight: 700; color: #f87171; margin-top: 4px;" id="repExpense">₹0</div>
+    </div>
+
+    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+      <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">Net Savings</div>
+      <div style="font-size: 24px; font-weight: 700; color: #22d3ee; margin-top: 4px;" id="repSavings">₹0</div>
+    </div>
+
+    <div style="background: rgba(255,255,255,0.02); border: 1px solid var(--border-color); border-radius: 12px; padding: 18px;">
+      <div style="font-size: 12px; color: var(--text-dim); text-transform: uppercase;">Savings Rate</div>
+      <div style="font-size: 24px; font-weight: 700; color: #818cf8; margin-top: 4px;" id="repRate">0%</div>
+    </div>
+  </div>
+
+  <!-- Category Breakdown Section -->
+  <div style="margin-bottom: 30px;">
+    <h4 style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 14px;">
+      <i class="fa-solid fa-list-ol text-cyan"></i> Category Spending Breakdown
+    </h4>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th style="text-align: right;">Amount Spent</th>
+            <th style="text-align: right;">Share of Total Expenses</th>
+          </tr>
+        </thead>
+        <tbody id="reportCategoryTableBody">
+          <tr>
+            <td colspan="3" style="text-align: center; color: var(--text-muted); padding: 20px;">
+              Loading category metrics...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- Budget Performance Section -->
+  <div style="margin-bottom: 30px;">
+    <h4 style="font-size: 16px; font-weight: 700; color: #fff; margin-bottom: 14px;">
+      <i class="fa-solid fa-sliders text-primary"></i> Budget Adherence Summary
+    </h4>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th style="text-align: right;">Budget Limit</th>
+            <th style="text-align: right;">Actual Spent</th>
+            <th style="text-align: right;">Remaining</th>
+            <th style="text-align: right;">Used %</th>
+            <th style="text-align: center;">Status</th>
+          </tr>
+        </thead>
+        <tbody id="reportBudgetTableBody">
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 20px;">
+              Loading budget status...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- AI Insights & Executive Assessment -->
+  <div style="background: rgba(59, 130, 246, 0.05); border: 1px solid rgba(59, 130, 246, 0.2); border-radius: 12px; padding: 20px;">
+    <h4 style="font-size: 15px; font-weight: 700; color: #60a5fa; margin-bottom: 10px;">
+      <i class="fa-solid fa-wand-magic-sparkles"></i> AI Financial Executive Assessment
+    </h4>
+    <p style="font-size: 14px; line-height: 1.6; color: #e2e8f0; margin-bottom: 12px;" id="reportAiSummary">
+      Generating tailored monthly assessment...
+    </p>
+    <div id="reportActionStepsContainer" style="display: none;">
+      <div style="font-size: 12px; font-weight: 600; text-transform: uppercase; color: var(--text-dim); margin-bottom: 6px;">
+        Key Next Actions for Upcoming Month:
+      </div>
+      <ul id="reportActionSteps" style="padding-left: 20px; font-size: 13.5px; color: var(--text-muted); line-height: 1.6; margin: 0;"></ul>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/reports.js') }}"></script>
+{% endblock %}

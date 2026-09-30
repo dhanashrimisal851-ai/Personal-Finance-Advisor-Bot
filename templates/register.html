@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Register — Personal Finance Advisor Bot</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body style="display: flex; align-items: center; justify-content: center; min-height: 100vh; background-color: var(--bg-primary); padding: 20px;">
+
+  <div style="width: 100%; max-width: 460px; background-color: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-lg); padding: 36px; box-shadow: var(--shadow-card);">
+    <div style="text-align: center; margin-bottom: 24px;">
+      <a href="{{ url_for('index') }}" style="display: inline-flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+        <div class="brand-icon" style="width: 36px; height: 36px; font-size: 18px;">
+          <i class="fa-solid fa-wallet"></i>
+        </div>
+        <span style="font-size: 20px; font-weight: 800; color: #fff;">Finance Advisor</span>
+      </a>
+      <h2 style="font-size: 24px; font-weight: 700; color: #fff; margin-bottom: 6px;">Create Your Account</h2>
+      <p style="font-size: 13.5px; color: var(--text-muted);">Start tracking and growing your wealth today</p>
+    </div>
+
+    <div id="registerAlert" style="display: none;"></div>
+
+    <form id="registerForm" onsubmit="handleRegister(event)">
+      <div class="form-group">
+        <label class="form-label" for="regName">Full Name *</label>
+        <input type="text" id="regName" class="form-control" placeholder="John Doe" required autocomplete="name">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="regEmail">Email Address *</label>
+        <input type="email" id="regEmail" class="form-control" placeholder="name@example.com" required autocomplete="email">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="regPassword">Password * (min. 6 characters)</label>
+        <input type="password" id="regPassword" class="form-control" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="regConfirmPassword">Confirm Password *</label>
+        <input type="password" id="regConfirmPassword" class="form-control" placeholder="••••••••" required minlength="6" autocomplete="new-password">
+      </div>
+
+      <button type="submit" id="regSubmitBtn" class="btn btn-primary" style="width: 100%; padding: 12px; margin-top: 8px;">
+        <i class="fa-solid fa-user-plus"></i> <span>Create Account</span>
+      </button>
+    </form>
+
+    <div style="text-align: center; margin-top: 24px; font-size: 13.5px; color: var(--text-muted);">
+      Already have an account? <a href="{{ url_for('auth.login_view') }}" style="font-weight: 600;">Sign In</a>
+    </div>
+  </div>
+
+  <script>
+    async function handleRegister(e) {
+      e.preventDefault();
+      const name = document.getElementById("regName").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      const password = document.getElementById("regPassword").value;
+      const confirm_password = document.getElementById("regConfirmPassword").value;
+      const alertBox = document.getElementById("registerAlert");
+      const btn = document.getElementById("regSubmitBtn");
+
+      if (password !== confirm_password) {
+        alertBox.className = "alert alert-danger";
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>Passwords do not match.</span>`;
+        alertBox.style.display = "flex";
+        return;
+      }
+
+      btn.disabled = true;
+      btn.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> <span>Creating account...</span>`;
+
+      try {
+        const res = await fetch("/api/register", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ name, email, password, confirm_password })
+        });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Registration failed.");
+        }
+
+        window.location.href = "/dashboard";
+      } catch (err) {
+        alertBox.className = "alert alert-danger";
+        alertBox.innerHTML = `<i class="fa-solid fa-circle-exclamation"></i> <span>${err.message}</span>`;
+        alertBox.style.display = "flex";
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-user-plus"></i> <span>Create Account</span>`;
+      }
+    }
+  </script>
+</body>
+</html>

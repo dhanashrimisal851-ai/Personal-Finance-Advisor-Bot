@@ -1,0 +1,204 @@
+{% extends "base.html" %}
+
+{% block title %}Expenses — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Expense Management{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Spending & Outflows</h2>
+    <p style="font-size: 13.5px; color: var(--text-muted);">Record, categorize, search and control every outflow</p>
+  </div>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <!-- View Mode Switcher -->
+    <div style="background: var(--bg-card); border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 4px; display: flex; gap: 4px;">
+      <button class="btn btn-sm btn-secondary active-mode" id="btnModeAll" onclick="setViewMode(null)">All</button>
+      <button class="btn btn-sm btn-secondary" id="btnModeWeekly" onclick="setViewMode('weekly')">This Week</button>
+      <button class="btn btn-sm btn-secondary" id="btnModeMonthly" onclick="setViewMode('monthly')">This Month</button>
+    </div>
+    
+    <button class="btn btn-primary" onclick="openModal('quickExpenseModal')">
+      <i class="fa-solid fa-plus"></i> <span>Add Expense</span>
+    </button>
+  </div>
+</div>
+
+<!-- Expense Stat Card -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
+  <div class="stat-card expense">
+    <div class="stat-header">
+      <span class="stat-label">Filtered Expenses</span>
+      <div class="stat-icon red"><i class="fa-solid fa-receipt"></i></div>
+    </div>
+    <div class="stat-value" id="expenseTotalDisplay">₹0</div>
+    <div class="stat-subtext" id="expenseCountDisplay">0 recorded entries</div>
+  </div>
+</div>
+
+<!-- Search & Filters Bar -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-body" style="padding: 16px 20px;">
+    <div style="display: flex; gap: 14px; align-items: center; flex-wrap: wrap;">
+      
+      <div style="flex: 1.5; min-width: 200px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">Search Description / Merchant</label>
+        <div style="position: relative;">
+          <input type="text" id="searchExpense" class="form-control" placeholder="Search keywords..." oninput="debounceLoadExpenses()">
+        </div>
+      </div>
+
+      <div style="flex: 1; min-width: 160px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">Category</label>
+        <select id="filterExpenseCategory" class="form-select" onchange="loadExpenses()">
+          <option value="All">All Categories</option>
+          <option value="Food">Food</option>
+          <option value="Rent">Rent</option>
+          <option value="Transport">Transport</option>
+          <option value="Education">Education</option>
+          <option value="Healthcare">Healthcare</option>
+          <option value="Shopping">Shopping</option>
+          <option value="Entertainment">Entertainment</option>
+          <option value="Bills & Utilities">Bills & Utilities</option>
+          <option value="Travel">Travel</option>
+          <option value="Personal Care">Personal Care</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">Payment Method</label>
+        <select id="filterExpensePayment" class="form-select" onchange="loadExpenses()">
+          <option value="All">All Methods</option>
+          <option value="UPI">UPI</option>
+          <option value="Credit Card">Credit Card</option>
+          <option value="Debit Card">Debit Card</option>
+          <option value="Net Banking">Net Banking</option>
+          <option value="Cash">Cash</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">From</label>
+        <input type="date" id="filterExpenseStart" class="form-control" onchange="loadExpenses()">
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">To</label>
+        <input type="date" id="filterExpenseEnd" class="form-control" onchange="loadExpenses()">
+      </div>
+
+      <div style="flex: 1; min-width: 140px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">Sort</label>
+        <select id="sortExpense" class="form-select" onchange="loadExpenses()">
+          <option value="date_desc">Date (Newest First)</option>
+          <option value="date_asc">Date (Oldest First)</option>
+          <option value="amount_desc">Amount (Highest First)</option>
+          <option value="amount_asc">Amount (Lowest First)</option>
+        </select>
+      </div>
+
+      <div style="align-self: flex-end; padding-bottom: 2px;">
+        <button class="btn btn-secondary btn-sm" onclick="resetExpenseFilters()">
+          <i class="fa-solid fa-filter-circle-xmark"></i>
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Expenses Table Card -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-receipt text-danger"></i>
+      <span>Recorded Expenses</span>
+    </div>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Payment Method</th>
+            <th style="text-align: right;">Amount</th>
+            <th style="text-align: center; width: 120px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="expenseTableBody">
+          <tr>
+            <td colspan="6" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              Loading expenses...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Expense Modal -->
+<div class="modal-backdrop" id="editExpenseModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-pen-to-square text-primary"></i> Edit Expense</h3>
+      <button class="modal-close" onclick="closeModal('editExpenseModal')">&times;</button>
+    </div>
+    <form id="editExpenseForm" onsubmit="handleEditExpense(event)">
+      <input type="hidden" id="editExpenseId">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="editExpenseAmount">Amount (₹) *</label>
+          <input type="number" id="editExpenseAmount" class="form-control" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editExpenseCategory">Category *</label>
+          <select id="editExpenseCategory" class="form-select" required>
+            <option value="Food">Food</option>
+            <option value="Rent">Rent</option>
+            <option value="Transport">Transport</option>
+            <option value="Education">Education</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Bills & Utilities">Bills & Utilities</option>
+            <option value="Travel">Travel</option>
+            <option value="Personal Care">Personal Care</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editExpensePayment">Payment Method</label>
+          <select id="editExpensePayment" class="form-select">
+            <option value="UPI">UPI</option>
+            <option value="Credit Card">Credit Card</option>
+            <option value="Debit Card">Debit Card</option>
+            <option value="Net Banking">Net Banking</option>
+            <option value="Cash">Cash</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editExpenseDate">Date *</label>
+          <input type="date" id="editExpenseDate" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editExpenseDescription">Description</label>
+          <input type="text" id="editExpenseDescription" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('editExpenseModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Update Expense</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/expenses.js') }}"></script>
+{% endblock %}

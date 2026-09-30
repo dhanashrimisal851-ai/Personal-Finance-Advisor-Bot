@@ -1,0 +1,264 @@
+{% extends "base.html" %}
+
+{% block title %}Budget Management & AI Generator — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Budget Management{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Monthly Limits & AI Budget Planner</h2>
+    <p style="font-size: 13.5px; color: var(--text-muted);">Set category spending ceilings or let Gemini AI generate your ideal plan</p>
+  </div>
+  <div style="display: flex; gap: 10px; align-items: center;">
+    <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+      <select id="budgetMonth" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="loadBudgets()">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+      <select id="budgetYear" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="loadBudgets()">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+
+    <button class="btn btn-secondary" onclick="openModal('aiBudgetModal')">
+      <i class="fa-solid fa-wand-magic-sparkles text-cyan"></i> <span>AI Budget Generator</span>
+    </button>
+    <button class="btn btn-primary" onclick="openModal('setBudgetModal')">
+      <i class="fa-solid fa-plus"></i> <span>Set Category Budget</span>
+    </button>
+  </div>
+</div>
+
+<!-- Budget Summary Cards -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 18px; margin-bottom: 24px;">
+  <div class="stat-card budget">
+    <div class="stat-header">
+      <span class="stat-label">Total Monthly Budget</span>
+      <div class="stat-icon amber"><i class="fa-solid fa-wallet"></i></div>
+    </div>
+    <div class="stat-value" id="budgetTotalDisplay">₹0</div>
+    <div class="stat-subtext" id="budgetCategoriesCount">0 categories set</div>
+  </div>
+
+  <div class="stat-card expense">
+    <div class="stat-header">
+      <span class="stat-label">Total Spent in Budgeted</span>
+      <div class="stat-icon red"><i class="fa-solid fa-credit-card"></i></div>
+    </div>
+    <div class="stat-value" id="budgetSpentDisplay">₹0</div>
+    <div class="stat-subtext">Active spending outflow</div>
+  </div>
+
+  <div class="stat-card savings">
+    <div class="stat-header">
+      <span class="stat-label">Remaining Safe Buffer</span>
+      <div class="stat-icon cyan"><i class="fa-solid fa-shield-halved"></i></div>
+    </div>
+    <div class="stat-value" id="budgetRemainingDisplay">₹0</div>
+    <div class="stat-subtext">Available before limit</div>
+  </div>
+
+  <div class="stat-card rate">
+    <div class="stat-header">
+      <span class="stat-label">Overspending Alert Count</span>
+      <div class="stat-icon red"><i class="fa-solid fa-triangle-exclamation"></i></div>
+    </div>
+    <div class="stat-value" id="budgetOverspentCount" style="color: #f87171;">0</div>
+    <div class="stat-subtext">Categories above 90% cap</div>
+  </div>
+</div>
+
+<!-- Budgets Grid -->
+<div class="card" style="margin-bottom: 30px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-chart-pie text-primary"></i>
+      <span>Category Budgets & Real-Time Adherence</span>
+    </div>
+  </div>
+  <div class="card-body">
+    <div id="budgetGrid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px;">
+      <div style="text-align: center; color: var(--text-muted); padding: 40px; grid-column: 1 / -1;">
+        Loading budget categories...
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- AI Generated Budget Preview Section (when generated) -->
+<div id="aiBudgetResultContainer" style="display: none; margin-bottom: 30px;">
+  <div class="card" style="border-color: var(--border-color-glow); background: linear-gradient(135deg, rgba(22, 32, 50, 0.98), rgba(30, 41, 59, 0.98));">
+    <div class="card-header">
+      <div class="card-title" style="color: #60a5fa;">
+        <i class="fa-solid fa-wand-magic-sparkles"></i>
+        <span>AI-Generated Personalized Budget Plan</span>
+      </div>
+      <div>
+        <button class="btn btn-success btn-sm" id="btnApplyAiPlan" onclick="applyAiPlanToDatabase()">
+          <i class="fa-solid fa-check"></i> Apply This Plan to My Budget
+        </button>
+      </div>
+    </div>
+    <div class="card-body">
+      <!-- 4 Pillars Breakdown -->
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 24px;">
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Needs (Essentials)</div>
+          <div style="font-size: 22px; font-weight: 700; color: #60a5fa; margin-top: 4px;" id="aiPlanNeeds">₹0</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Rent, Groceries, Utilities</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Wants (Lifestyle)</div>
+          <div style="font-size: 22px; font-weight: 700; color: #fbbf24; margin-top: 4px;" id="aiPlanWants">₹0</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Dining, Shopping, Movies</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Direct Savings</div>
+          <div style="font-size: 22px; font-weight: 700; color: #34d399; margin-top: 4px;" id="aiPlanSavings">₹0</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Goal-oriented accumulation</div>
+        </div>
+        <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--border-color); border-radius: 12px; padding: 16px;">
+          <div style="font-size: 11px; color: var(--text-dim); text-transform: uppercase;">Emergency Fund</div>
+          <div style="font-size: 22px; font-weight: 700; color: #22d3ee; margin-top: 4px;" id="aiPlanEmergency">₹0</div>
+          <div style="font-size: 11px; color: var(--text-muted); margin-top: 2px;">Liquid unforeseen cushion</div>
+        </div>
+      </div>
+
+      <!-- Why Recommended -->
+      <div style="background: rgba(59, 130, 246, 0.08); border: 1px solid rgba(59, 130, 246, 0.25); border-radius: 10px; padding: 16px; margin-bottom: 20px;">
+        <div style="font-size: 12px; font-weight: 700; text-transform: uppercase; color: #60a5fa; margin-bottom: 6px;">
+          <i class="fa-solid fa-lightbulb"></i> Why this budget is recommended:
+        </div>
+        <div style="font-size: 14px; line-height: 1.6; color: #e2e8f0;" id="aiPlanExplanation">
+          ...
+        </div>
+      </div>
+
+      <!-- Proposed Category Allocations Table -->
+      <h4 style="font-size: 14px; font-weight: 600; color: #fff; margin-bottom: 12px;">Detailed Category Limits Generated:</h4>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Recommended Ceiling</th>
+              <th>Optimization Tip</th>
+            </tr>
+          </thead>
+          <tbody id="aiAllocationsTableBody"></tbody>
+        </table>
+      </div>
+
+      <div style="margin-top: 14px; font-size: 11px; color: var(--text-dim);">
+        <i class="fa-solid fa-circle-info"></i> Generated by Personal Finance Advisor AI for budgeting education.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     SET / EDIT BUDGET MODAL
+     ========================================================================== -->
+<div class="modal-backdrop" id="setBudgetModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-sliders text-primary"></i> Set Category Budget</h3>
+      <button class="modal-close" onclick="closeModal('setBudgetModal')">&times;</button>
+    </div>
+    <form id="setBudgetForm" onsubmit="handleSetBudget(event)">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="budgetCategory">Category *</label>
+          <select id="budgetCategory" class="form-select" required>
+            <option value="Food">Food</option>
+            <option value="Rent">Rent</option>
+            <option value="Transport">Transport</option>
+            <option value="Education">Education</option>
+            <option value="Healthcare">Healthcare</option>
+            <option value="Shopping">Shopping</option>
+            <option value="Entertainment">Entertainment</option>
+            <option value="Bills & Utilities">Bills & Utilities</option>
+            <option value="Travel">Travel</option>
+            <option value="Personal Care">Personal Care</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="budgetAmount">Monthly Limit (₹) *</label>
+          <input type="number" id="budgetAmount" class="form-control" placeholder="e.g. 5000" step="1" min="1" required>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('setBudgetModal')">Cancel</button>
+        <button type="submit" class="btn btn-primary"><i class="fa-solid fa-check"></i> Save Budget</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- ==========================================================================
+     AI BUDGET GENERATOR MODAL
+     ========================================================================== -->
+<div class="modal-backdrop" id="aiBudgetModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-wand-magic-sparkles text-cyan"></i> AI Budget Generator</h3>
+      <button class="modal-close" onclick="closeModal('aiBudgetModal')">&times;</button>
+    </div>
+    <form id="aiBudgetForm" onsubmit="handleGenerateAiBudget(event)">
+      <div class="modal-body">
+        <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 16px;">
+          Enter your income and expenses to let Google Gemini AI construct an optimized, sustainable budget plan.
+        </p>
+
+        <div class="form-group">
+          <label class="form-label" for="aiIncome">Monthly Income (₹) *</label>
+          <input type="number" id="aiIncome" class="form-control" placeholder="e.g. 30000" min="1" step="1" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="aiFixedExpenses">Fixed Expenses (₹) (Rent, Bills, EMIs)</label>
+          <input type="number" id="aiFixedExpenses" class="form-control" placeholder="e.g. 10000" min="0" step="1">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="aiVariableExpenses">Variable Expenses (₹) (Food, Transport, Outings)</label>
+          <input type="number" id="aiVariableExpenses" class="form-control" placeholder="e.g. 9000" min="0" step="1">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="aiGoal">Primary Financial Goal</label>
+          <input type="text" id="aiGoal" class="form-control" placeholder="e.g. Save for New Laptop or Emergency Buffer">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="aiSavingsPct">Desired Savings Percentage (%)</label>
+          <input type="number" id="aiSavingsPct" class="form-control" value="25" min="5" max="75" step="1">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('aiBudgetModal')">Cancel</button>
+        <button type="submit" id="btnAiGenerateSubmit" class="btn btn-primary">
+          <i class="fa-solid fa-bolt"></i> Generate Smart Budget
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/budget.js') }}"></script>
+{% endblock %}

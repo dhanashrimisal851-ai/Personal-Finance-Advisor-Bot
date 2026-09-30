@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Spending Analytics — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Spending Analytics{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Financial Intelligence & Trends</h2>
+    <p style="font-size: 13.5px; color: var(--text-muted);">Interactive breakdowns, historical comparisons, and category insights</p>
+  </div>
+  <div style="display: flex; align-items: center; gap: 10px;">
+    <div style="display: flex; align-items: center; gap: 8px; background: var(--bg-card); padding: 6px 12px; border-radius: var(--radius-sm); border: 1px solid var(--border-color);">
+      <select id="analyticsMonth" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="loadAnalytics()">
+        <option value="1">January</option>
+        <option value="2">February</option>
+        <option value="3">March</option>
+        <option value="4">April</option>
+        <option value="5">May</option>
+        <option value="6">June</option>
+        <option value="7">July</option>
+        <option value="8">August</option>
+        <option value="9">September</option>
+        <option value="10">October</option>
+        <option value="11">November</option>
+        <option value="12">December</option>
+      </select>
+      <select id="analyticsYear" class="form-select" style="padding: 4px 8px; font-size: 13px; width: auto;" onchange="loadAnalytics()">
+        <option value="2025">2025</option>
+        <option value="2026" selected>2026</option>
+        <option value="2027">2027</option>
+      </select>
+    </div>
+    <button class="btn btn-secondary btn-sm" onclick="loadAnalytics()">
+      <i class="fa-solid fa-arrows-rotate"></i>
+    </button>
+  </div>
+</div>
+
+<!-- 2 Charts Row: Category Doughnut & Top Categories List -->
+<div style="display: grid; grid-template-columns: 1.1fr 1fr; gap: 24px; margin-bottom: 28px;">
+  <!-- Doughnut Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-chart-pie text-cyan"></i>
+        <span>Expense Distribution by Category</span>
+      </div>
+    </div>
+    <div class="card-body" style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 320px;">
+      <div style="width: 100%; max-width: 380px; position: relative;">
+        <canvas id="categoryDoughnutChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <!-- Top Spending Categories List -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-arrow-trend-up text-danger"></i>
+        <span>Top Spending Categories</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <div id="topSpendingContainer" style="display: flex; flex-direction: column; gap: 14px;">
+        <div style="text-align: center; color: var(--text-muted); padding: 30px;">
+          Loading spending rankings...
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2 Historical Charts Row: Income vs Expenses Bar Chart & Savings Trend Line Chart -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 28px;">
+  
+  <!-- Income vs Expenses Bar Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-chart-column text-primary"></i>
+        <span>6-Month Income vs Expenses</span>
+      </div>
+    </div>
+    <div class="card-body" style="min-height: 280px;">
+      <canvas id="incomeVsExpenseBarChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Savings Trend Line Chart -->
+  <div class="card">
+    <div class="card-header">
+      <div class="card-title">
+        <i class="fa-solid fa-chart-line text-success"></i>
+        <span>6-Month Savings Trajectory</span>
+      </div>
+    </div>
+    <div class="card-body" style="min-height: 280px;">
+      <canvas id="savingsTrendLineChart"></canvas>
+    </div>
+  </div>
+
+</div>
+
+<!-- Month-over-Month Category Comparison Table -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-code-compare text-primary"></i>
+      <span>Month-over-Month Category Comparison (Current vs Previous Month)</span>
+    </div>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Category</th>
+            <th style="text-align: right;">Previous Month</th>
+            <th style="text-align: right;">Current Month</th>
+            <th style="text-align: right;">Change (₹)</th>
+            <th style="text-align: right;">% Shift</th>
+          </tr>
+        </thead>
+        <tbody id="comparisonTableBody">
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              Loading comparative analysis...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/analytics.js') }}"></script>
+{% endblock %}

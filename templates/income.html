@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+
+{% block title %}Income Management — Personal Finance Advisor Bot{% endblock %}
+{% block page_title %}Income Management{% endblock %}
+
+{% block content %}
+<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; flex-wrap: wrap; gap: 16px;">
+  <div>
+    <h2 style="font-size: 22px; font-weight: 700; color: #fff;">Earnings & Cash Inflows</h2>
+    <p style="font-size: 13.5px; color: var(--text-muted);">Track salaries, freelance stipends, business earnings, and allowances</p>
+  </div>
+  <div>
+    <button class="btn btn-success" onclick="openAddIncomeModal()">
+      <i class="fa-solid fa-plus"></i> <span>Add Income Entry</span>
+    </button>
+  </div>
+</div>
+
+<!-- Income Stat Card -->
+<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 18px; margin-bottom: 24px;">
+  <div class="stat-card income">
+    <div class="stat-header">
+      <span class="stat-label">Total Filtered Income</span>
+      <div class="stat-icon green"><i class="fa-solid fa-coins"></i></div>
+    </div>
+    <div class="stat-value" id="incomeTotalDisplay">₹0</div>
+    <div class="stat-subtext" id="incomeCountDisplay">0 recorded entries</div>
+  </div>
+</div>
+
+<!-- Filters Bar -->
+<div class="card" style="margin-bottom: 24px;">
+  <div class="card-body" style="padding: 16px 20px;">
+    <div style="display: flex; gap: 16px; align-items: center; flex-wrap: wrap;">
+      <div style="flex: 1; min-width: 180px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">Filter Source</label>
+        <select id="filterIncomeSource" class="form-select" onchange="loadIncomes()">
+          <option value="All">All Sources</option>
+          <option value="Salary">Salary</option>
+          <option value="Freelancing">Freelancing</option>
+          <option value="Allowance">Allowance</option>
+          <option value="Business">Business</option>
+          <option value="Investment">Investment</option>
+          <option value="Other">Other</option>
+        </select>
+      </div>
+
+      <div style="flex: 1; min-width: 160px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">From Date</label>
+        <input type="date" id="filterIncomeStart" class="form-control" onchange="loadIncomes()">
+      </div>
+
+      <div style="flex: 1; min-width: 160px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">To Date</label>
+        <input type="date" id="filterIncomeEnd" class="form-control" onchange="loadIncomes()">
+      </div>
+
+      <div style="flex: 1; min-width: 160px;">
+        <label class="form-label" style="margin-bottom: 4px; font-size: 12px;">Sort By</label>
+        <select id="sortIncome" class="form-select" onchange="loadIncomes()">
+          <option value="date_desc">Date (Newest First)</option>
+          <option value="date_asc">Date (Oldest First)</option>
+          <option value="amount_desc">Amount (Highest First)</option>
+          <option value="amount_asc">Amount (Lowest First)</option>
+        </select>
+      </div>
+
+      <div style="align-self: flex-end; padding-bottom: 2px;">
+        <button class="btn btn-secondary btn-sm" onclick="resetIncomeFilters()">
+          <i class="fa-solid fa-filter-circle-xmark"></i> Reset
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Income Table Card -->
+<div class="card">
+  <div class="card-header">
+    <div class="card-title">
+      <i class="fa-solid fa-list text-success"></i>
+      <span>Income Records</span>
+    </div>
+  </div>
+  <div class="card-body" style="padding: 0;">
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Source</th>
+            <th>Description</th>
+            <th style="text-align: right;">Amount</th>
+            <th style="text-align: center; width: 120px;">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="incomeTableBody">
+          <tr>
+            <td colspan="5" style="text-align: center; color: var(--text-muted); padding: 30px;">
+              Loading income entries...
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Income Modal -->
+<div class="modal-backdrop" id="editIncomeModal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h3 class="modal-title"><i class="fa-solid fa-pen-to-square text-success"></i> Edit Income</h3>
+      <button class="modal-close" onclick="closeModal('editIncomeModal')">&times;</button>
+    </div>
+    <form id="editIncomeForm" onsubmit="handleEditIncome(event)">
+      <input type="hidden" id="editIncomeId">
+      <div class="modal-body">
+        <div class="form-group">
+          <label class="form-label" for="editIncomeAmount">Amount (₹) *</label>
+          <input type="number" id="editIncomeAmount" class="form-control" step="0.01" min="0.01" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editIncomeSource">Source *</label>
+          <select id="editIncomeSource" class="form-select" required>
+            <option value="Salary">Salary</option>
+            <option value="Freelancing">Freelancing</option>
+            <option value="Allowance">Allowance</option>
+            <option value="Business">Business</option>
+            <option value="Investment">Investment</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editIncomeDate">Date *</label>
+          <input type="date" id="editIncomeDate" class="form-control" required>
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="editIncomeDescription">Description</label>
+          <input type="text" id="editIncomeDescription" class="form-control">
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeModal('editIncomeModal')">Cancel</button>
+        <button type="submit" class="btn btn-success"><i class="fa-solid fa-check"></i> Update Income</button>
+      </div>
+    </form>
+  </div>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script src="{{ url_for('static', filename='js/income.js') }}"></script>
+{% endblock %}
